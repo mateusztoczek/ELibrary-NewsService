@@ -3,12 +3,14 @@ package database
 import (
 	"database/sql"
 	"fmt"
+	"news/config"
 
 	"github.com/pkg/errors"
 )
 
-func ConnectDB() (*sql.DB, error) {
-	dbInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=require", host, port, user, password, dbname)
+func ConnectDB(config config.Config) (*sql.DB, error) {
+
+	dbInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=require", config.Host, config.Port, config.User, config.Password, config.DBName)
 	db, err := sql.Open("postgres", dbInfo)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to connect to the database")
@@ -16,7 +18,7 @@ func ConnectDB() (*sql.DB, error) {
 	return db, nil
 }
 
-func CreateNewsTable(db *sql.DB) error {
+func CreateNewsTable(db *sql.DB, config config.Config) error {
 	query := fmt.Sprintf(`
 		CREATE SCHEMA IF NOT EXISTS %s;
 		CREATE TABLE IF NOT EXISTS %s.%s (
@@ -25,7 +27,7 @@ func CreateNewsTable(db *sql.DB) error {
 			createdDate TIMESTAMP NOT NULL,
 			authorId INT NOT NULL,
 			lastUpdate TIMESTAMP NOT NULL
-		);`, schemaName, schemaName, tableName)
+		);`, config.SchemaName, config.SchemaName, config.TableName)
 
 	_, err := db.Exec(query)
 	if err != nil {

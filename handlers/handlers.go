@@ -12,11 +12,6 @@ import (
 	"github.com/gorilla/mux"
 )
 
-const (
-	schemaName = "newsService"
-	tableName  = "News"
-)
-
 type News struct {
 	ID          int    `json:"id" db:"Id"`
 	Content     string `json:"content" db:"content"`
@@ -34,7 +29,7 @@ type LoginCredentials struct {
 	GrantType string `json:"grant_type"`
 }
 
-func GetAllNews(db *sql.DB) http.HandlerFunc {
+func GetAllNews(db *sql.DB, schemaName, tableName string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Wykonanie zapytania SELECT
 		query := fmt.Sprintf(`SELECT * FROM "%s"."%s"`, schemaName, tableName)
@@ -71,7 +66,7 @@ func GetAllNews(db *sql.DB) http.HandlerFunc {
 	}
 }
 
-func GetNewsByID(db *sql.DB) http.HandlerFunc {
+func GetNewsByID(db *sql.DB, schemaName, tableName string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Pobranie wartości parametru "id" z ścieżki
 		vars := mux.Vars(r)
@@ -113,7 +108,7 @@ func GetNewsByID(db *sql.DB) http.HandlerFunc {
 	}
 }
 
-func CreateNews(db *sql.DB) http.HandlerFunc {
+func CreateNews(db *sql.DB, schemaName, tableName string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Sprawdzenie uprawnień użytkownika na podstawie tokenu JWT w nagłówku Authorization
 		tokenString := r.Header.Get("Authorization")
@@ -171,7 +166,7 @@ func CreateNews(db *sql.DB) http.HandlerFunc {
 	}
 }
 
-func UpdateNews(db *sql.DB) http.HandlerFunc {
+func UpdateNews(db *sql.DB, schemaName, tableName string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Pobranie tokena z nagłówka Authorization
 		authHeader := r.Header.Get("Authorization")
@@ -210,7 +205,7 @@ func UpdateNews(db *sql.DB) http.HandlerFunc {
 		}
 
 		// Aktualizacja newsa w bazie danych
-		query := `UPDATE "newsService"."News" SET "Content"=$1, "LastUpdate"=NOW() WHERE "Id"=$2`
+		query := fmt.Sprintf(`UPDATE "%s"."%s" SET "Content"=$1, "LastUpdate"=NOW() WHERE "Id"=$2`, schemaName, tableName)
 		_, err = db.Exec(query, newsData.Content, newsID)
 		if err != nil {
 			http.Error(w, "Błąd podczas aktualizacji newsa", http.StatusInternalServerError)
@@ -223,7 +218,7 @@ func UpdateNews(db *sql.DB) http.HandlerFunc {
 	}
 }
 
-func DeleteNews(db *sql.DB) http.HandlerFunc {
+func DeleteNews(db *sql.DB, schemaName, tableName string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Pobranie tokena z nagłówka Authorization
 		authHeader := r.Header.Get("Authorization")
