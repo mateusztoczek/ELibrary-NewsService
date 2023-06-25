@@ -31,6 +31,10 @@ Więcej o prawidłowej konfiguracji GO oraz ustawieniu zmiennych dla platformy W
 3. Wpisz prawidłową konfigurację połączenia w pliku configExample.json. Zmień nazwę pliku na "config.json" lub zmień ściezkę do pliku konfiguracyjnego wewnątrz config.GetConfig().
 4. Uruchom program za pomocą polecenia: go run main.go
 
+### Docker
+1. Zbuduj obraz Dockera za pomocą polecenia: "docker build -t news-service ." 
+2. Uruchom kontener: "docker run -p 8080:8080 news-service"
+
 ### Endpointy
 Opis endpointów zawierać będzie opis zapytania wraz z jego zawartością oraz wymogami wysłania polecenia, a takze przykład zapytania dla następujących danych:
 - Port serwera: 8080,
