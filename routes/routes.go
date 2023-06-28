@@ -1,12 +1,12 @@
-package handlers
+package routes
 
 import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
-	"strings"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/mux"
@@ -32,6 +32,7 @@ type LoginCredentials struct {
 func GetAllNews(db *sql.DB, schemaName, tableName string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Wykonanie zapytania SELECT
+		
 		query := fmt.Sprintf(`SELECT * FROM "%s"."%s"`, schemaName, tableName)
 		rows, err := db.Query(query)
 		if err != nil {
@@ -39,6 +40,8 @@ func GetAllNews(db *sql.DB, schemaName, tableName string) http.HandlerFunc {
 			return
 		}
 		defer rows.Close()
+
+		log.Println("query", query)
 
 		// Przetwarzanie wyników
 		newsList := make([]News, 0)
@@ -52,12 +55,16 @@ func GetAllNews(db *sql.DB, schemaName, tableName string) http.HandlerFunc {
 			newsList = append(newsList, news)
 		}
 
+		log.Println("newsList", newsList)
+
 		// Konwersja do formatu JSON
 		jsonData, err := json.Marshal(newsList)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
+
+		log.Println("jsonData", jsonData)
 
 		// Ustawienie nagłówka i zwrócenie odpowiedzi
 		w.Header().Set("Content-Type", "application/json")
@@ -111,7 +118,7 @@ func GetNewsByID(db *sql.DB, schemaName, tableName string) http.HandlerFunc {
 func CreateNews(db *sql.DB, schemaName, tableName string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Sprawdzenie uprawnień użytkownika na podstawie tokenu JWT w nagłówku Authorization
-		tokenString := r.Header.Get("Authorization")
+		/*tokenString := r.Header.Get("Authorization")
 		tokenString = strings.TrimPrefix(tokenString, "Bearer ")
 		fmt.Println("Token: ", tokenString)
 		claims, err := validateToken(tokenString)
@@ -125,22 +132,27 @@ func CreateNews(db *sql.DB, schemaName, tableName string) http.HandlerFunc {
 		if claims.GrantType != "admin" && claims.GrantType != "employee" {
 			fmt.Println("Brak roli admin lub employee")
 			return
-		}
-		authorID := claims.ID
+		}*/
+		authorID := 6
 
 		// Odczytanie danych nowego news'a z ciała żądania
+		log.Println("Pre json")
 		var newNews NewNews
-		err = json.NewDecoder(r.Body).Decode(&newNews)
+		err := json.NewDecoder(r.Body).Decode(&newNews)
 		if err != nil {
+			log.Println("Json:", err)
 			http.Error(w, "Invalid request body", http.StatusBadRequest)
 			return
 		}
+		log.Println("Json:", newNews)
 
 		// Sprawdzenie, czy treść news'a jest niepusta
 		if newNews.Content == "" {
 			http.Error(w, "News content cannot be empty", http.StatusBadRequest)
 			return
 		}
+
+		log.Println("not empty")
 
 		// Wstawienie nowego news'a do bazy danych
 		query := fmt.Sprintf(`INSERT INTO "%s"."%s" ("Content", "CreatedDate", "AuthorId", "LastUpdate") VALUES ($1, NOW(), $2, NOW()) RETURNING "Id"`, schemaName, tableName)
@@ -151,6 +163,8 @@ func CreateNews(db *sql.DB, schemaName, tableName string) http.HandlerFunc {
 			return
 		}
 
+		log.Println("Db query", newsID)
+
 		// Utworzenie odpowiedzi zawierającej ID utworzonego news'a
 		response := map[string]int{"id": newsID}
 		jsonData, err := json.Marshal(response)
@@ -158,6 +172,8 @@ func CreateNews(db *sql.DB, schemaName, tableName string) http.HandlerFunc {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
+
+		log.Println("id", response)
 
 		// Ustawienie nagłówka i zwrócenie odpowiedzi
 		w.Header().Set("Content-Type", "application/json")
@@ -169,7 +185,7 @@ func CreateNews(db *sql.DB, schemaName, tableName string) http.HandlerFunc {
 func UpdateNews(db *sql.DB, schemaName, tableName string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Pobranie tokena z nagłówka Authorization
-		authHeader := r.Header.Get("Authorization")
+		/*authHeader := r.Header.Get("Authorization")
 		if authHeader == "" {
 			http.Error(w, "Brak tokena uwierzytelniającego", http.StatusUnauthorized)
 			return
@@ -189,20 +205,23 @@ func UpdateNews(db *sql.DB, schemaName, tableName string) http.HandlerFunc {
 		if claims.GrantType != "admin" && claims.GrantType != "employee" {
 			fmt.Println("Brak roli admin lub employee")
 			return
-		}
+		}*/
 		// Pobranie identyfikatora newsa z parametru ścieżki
 		vars := mux.Vars(r)
 		newsID := vars["id"]
+		log.Println("1")
 
 		// Odczytanie treści newsa z ciała żądania
 		var newsData struct {
 			Content string `json:"content"`
 		}
-		err = json.NewDecoder(r.Body).Decode(&newsData)
+		err := json.NewDecoder(r.Body).Decode(&newsData)
 		if err != nil {
 			http.Error(w, "Błąd odczytu danych żądania", http.StatusBadRequest)
 			return
 		}
+
+		log.Println("2")
 
 		// Aktualizacja newsa w bazie danych
 		query := fmt.Sprintf(`UPDATE "%s"."%s" SET "Content"=$1, "LastUpdate"=NOW() WHERE "Id"=$2`, schemaName, tableName)
@@ -211,6 +230,9 @@ func UpdateNews(db *sql.DB, schemaName, tableName string) http.HandlerFunc {
 			http.Error(w, "Błąd podczas aktualizacji newsa", http.StatusInternalServerError)
 			return
 		}
+
+		log.Println("3")
+		
 
 		// Zwrócenie odpowiedzi sukcesu
 		w.WriteHeader(http.StatusOK)
@@ -221,7 +243,7 @@ func UpdateNews(db *sql.DB, schemaName, tableName string) http.HandlerFunc {
 func DeleteNews(db *sql.DB, schemaName, tableName string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Pobranie tokena z nagłówka Authorization
-		authHeader := r.Header.Get("Authorization")
+		/*authHeader := r.Header.Get("Authorization")
 		if authHeader == "" {
 			http.Error(w, "Brak tokena uwierzytelniającego", http.StatusUnauthorized)
 			return
@@ -240,11 +262,12 @@ func DeleteNews(db *sql.DB, schemaName, tableName string) http.HandlerFunc {
 		if claims.GrantType != "admin" && claims.GrantType != "employee" {
 			fmt.Println("Brak roli admin lub employee")
 			return
-		}
+		}*/
 
 		// Pobranie identyfikatora newsa z parametru ścieżki
 		vars := mux.Vars(r)
 		newsID := vars["id"]
+		log.Println("2")
 
 		// Usunięcie newsa z bazy danych
 		// ...
@@ -254,6 +277,7 @@ func DeleteNews(db *sql.DB, schemaName, tableName string) http.HandlerFunc {
 			http.Error(w, "Błąd podczas usuwania newsa z bazy danych", http.StatusInternalServerError)
 			return
 		}
+		log.Println("3")
 
 		// Sprawdzenie liczby usuniętych wierszy
 		rowsAffected, err := result.RowsAffected()
@@ -261,12 +285,15 @@ func DeleteNews(db *sql.DB, schemaName, tableName string) http.HandlerFunc {
 			http.Error(w, "Błąd podczas pobierania liczby usuniętych wierszy", http.StatusInternalServerError)
 			return
 		}
+		log.Println("4")
+
 
 		// Sprawdzenie, czy jakikolwiek wiersz został usunięty
 		if rowsAffected == 0 {
 			http.Error(w, "Nie znaleziono newsa o podanym identyfikatorze", http.StatusNotFound)
 			return
 		}
+		log.Println("5")
 
 		// Zwrócenie odpowiedzi sukcesu
 		w.WriteHeader(http.StatusOK)
