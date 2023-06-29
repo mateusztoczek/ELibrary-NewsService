@@ -25,8 +25,8 @@ func CreateNewsTable(db *sql.DB, config config.Config) error {
 			id SERIAL PRIMARY KEY,
 			content TEXT NOT NULL,
 			createdDate TIMESTAMP NOT NULL,
-			authorId INT NOT NULL,
-			lastUpdate TIMESTAMP NOT NULL
+			lastUpdate TIMESTAMP NOT NULL,
+			authorId TEXT NOT NULL
 		);`, config.SchemaName, config.SchemaName, config.TableName)
 
 	_, err := db.Exec(query)

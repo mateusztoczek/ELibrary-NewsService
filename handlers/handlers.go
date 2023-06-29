@@ -16,7 +16,7 @@ type News struct {
 	ID          int    `json:"id" db:"Id"`
 	Content     string `json:"content" db:"content"`
 	CreatedDate string `json:"createdDate" db:"createdDate"`
-	AuthorID    int    `json:"authorId" db:"authorId"`
+	AuthorID    string `json:"authorId" db:"authorId"`
 	LastUpdate  string `json:"lastUpdate" db:"lastUpdate"`
 }
 
@@ -25,7 +25,7 @@ type NewNews struct {
 }
 
 type LoginCredentials struct {
-	ID        int    `json:"ID"`
+	ID        string `json:"ID"`
 	GrantType string `json:"grant_type"`
 }
 
@@ -297,15 +297,19 @@ func validateToken(tokenString string) (*LoginCredentials, error) {
 	var loginCredentials LoginCredentials
 	// Sprawdzenie ważności tokenu
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		numStr := claims["id"].(string)
-		num, err := strconv.Atoi(numStr)
-		if err != nil {
-			fmt.Println("Błąd konwersji:", err)
-			return nil, err
+		claimsMap := make(map[string]interface{})
+		for key, value := range claims {
+			claimsMap[key] = value
 		}
-		loginCredentials.ID = num
+
+		nameIdentifier := claimsMap["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"]
+		roleUser := claimsMap["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"]
+		IDstr := fmt.Sprint(nameIdentifier)
+		rolestr := fmt.Sprint(roleUser)
+
+		loginCredentials.ID = IDstr
 		fmt.Println("ID:", loginCredentials.ID)
-		loginCredentials.GrantType = claims["grant_type"].(string)
+		loginCredentials.GrantType = rolestr
 		fmt.Println("Grant Type:", loginCredentials.GrantType)
 
 	} else {
