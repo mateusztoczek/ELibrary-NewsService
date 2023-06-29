@@ -16,8 +16,8 @@ type News struct {
 	ID          int    `json:"id" db:"Id"`
 	Content     string `json:"content" db:"content"`
 	CreatedDate string `json:"createdDate" db:"createdDate"`
-	AuthorID    string `json:"authorId" db:"authorId"`
 	LastUpdate  string `json:"lastUpdate" db:"lastUpdate"`
+	AuthorID    string `json:"authorId" db:"authorId"`
 }
 
 type NewNews struct {
@@ -32,7 +32,7 @@ type LoginCredentials struct {
 func GetAllNews(db *sql.DB, schemaName, tableName string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Wykonanie zapytania SELECT
-		query := fmt.Sprintf(`SELECT * FROM "%s"."%s"`, schemaName, tableName)
+		query := fmt.Sprintf(`SELECT "Id", "Content", "CreatedDate", "AuthorId", "LastUpdate" FROM "%s"."%s"`, schemaName, tableName)
 		rows, err := db.Query(query)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
