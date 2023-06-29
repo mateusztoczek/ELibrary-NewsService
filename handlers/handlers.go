@@ -16,7 +16,7 @@ type News struct {
 	ID          int    `json:"id" db:"Id"`
 	Content     string `json:"content" db:"content"`
 	CreatedDate string `json:"createdDate" db:"createdDate"`
-	AuthorID    int    `json:"authorId" db:"authorId"`
+	AuthorID    string `json:"authorId" db:"authorId"`
 	LastUpdate  string `json:"lastUpdate" db:"lastUpdate"`
 }
 
@@ -25,10 +25,17 @@ type NewNews struct {
 }
 
 type LoginCredentials struct {
-	ID        int    `json:"ID"`
+	ID        string `json:"ID"`
 	GrantType string `json:"grant_type"`
 }
 
+// GetAllNews retrieves all news.
+// @Summary Retrieve all news
+// @Description Retrieves a list of all news articles.
+// @Tags News
+// @Produce json
+// @Success 200 {array} News
+// @Router /api/News [get]
 func GetAllNews(db *sql.DB, schemaName, tableName string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Wykonanie zapytania SELECT
@@ -66,6 +73,17 @@ func GetAllNews(db *sql.DB, schemaName, tableName string) http.HandlerFunc {
 	}
 }
 
+// GetNewsByID retrieves a news article by its ID.
+// @Summary Retrieve a news article by ID
+// @Description Retrieves a news article based on the provided ID.
+// @Tags News
+// @Accept json
+// @Produce json
+// @Param id path int true "News ID"
+// @Success 200 {object} News
+// @Failure 400 {string} string "Invalid news ID"
+// @Failure 404 {string} string "News not found"
+// @Router /api/News/{id} [get]
 func GetNewsByID(db *sql.DB, schemaName, tableName string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Pobranie wartości parametru "id" z ścieżki
@@ -108,6 +126,16 @@ func GetNewsByID(db *sql.DB, schemaName, tableName string) http.HandlerFunc {
 	}
 }
 
+// @Summary Create a new news article
+// @Description Creates a new news article with the provided data.
+// @Tags News
+// @Accept json
+// @Produce json
+// @Param news body NewNews true "NewNews object"
+// @Security ApiKeyAuth
+// @Success 201 {object} NewNews
+// @Failure 400 {string} string "Invalid request payload"
+// @Router /api/News [post]
 func CreateNews(db *sql.DB, schemaName, tableName string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Sprawdzenie uprawnień użytkownika na podstawie tokenu JWT w nagłówku Authorization
@@ -166,6 +194,18 @@ func CreateNews(db *sql.DB, schemaName, tableName string) http.HandlerFunc {
 	}
 }
 
+// @Summary Update an existing news article
+// @Description Updates an existing news article with the provided data.
+// @Tags News
+// @Accept json
+// @Produce json
+// @Param id path int true "News ID"
+// @Param news body News true "News object"
+// @Security ApiKeyAuth
+// @Success 200 {object} News
+// @Failure 400 {string} string "Invalid news ID or request payload"
+// @Failure 404 {string} string "News not found"
+// @Router /api/News/{id} [put]
 func UpdateNews(db *sql.DB, schemaName, tableName string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Pobranie tokena z nagłówka Authorization
@@ -218,6 +258,17 @@ func UpdateNews(db *sql.DB, schemaName, tableName string) http.HandlerFunc {
 	}
 }
 
+// @Summary Delete a news article by ID
+// @Description Deletes a news article based on the provided ID.
+// @Tags News
+// @Accept json
+// @Produce json
+// @Param id path int true "News ID"
+// @Security ApiKeyAuth
+// @Success 204 {string} string "News deleted successfully"
+// @Failure 400 {string} string "Invalid news ID"
+// @Failure 404 {string} string "News not found"
+// @Router /api/News/{id} [delete]
 func DeleteNews(db *sql.DB, schemaName, tableName string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Pobranie tokena z nagłówka Authorization
@@ -297,15 +348,19 @@ func validateToken(tokenString string) (*LoginCredentials, error) {
 	var loginCredentials LoginCredentials
 	// Sprawdzenie ważności tokenu
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		numStr := claims["id"].(string)
-		num, err := strconv.Atoi(numStr)
-		if err != nil {
-			fmt.Println("Błąd konwersji:", err)
-			return nil, err
+		claimsMap := make(map[string]interface{})
+		for key, value := range claims {
+			claimsMap[key] = value
 		}
-		loginCredentials.ID = num
+
+		nameIdentifier := claimsMap["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"]
+		roleUser := claimsMap["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"]
+		IDstr := fmt.Sprint(nameIdentifier)
+		rolestr := fmt.Sprint(roleUser)
+
+		loginCredentials.ID = IDstr
 		fmt.Println("ID:", loginCredentials.ID)
-		loginCredentials.GrantType = claims["grant_type"].(string)
+		loginCredentials.GrantType = rolestr
 		fmt.Println("Grant Type:", loginCredentials.GrantType)
 
 	} else {

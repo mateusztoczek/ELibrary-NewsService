@@ -1,3 +1,17 @@
+// @title News API Documentation
+// @version 1.0
+// @description This is a sample API documentation for a news service.
+// @host localhost:8080
+// @schemes http
+
+// @SecurityDefinitions
+// Bearer:
+//   type: apiKey
+//   in: header
+//   name: Authorization
+
+// @Security
+// - Bearer: []
 package main
 
 import (
@@ -7,9 +21,13 @@ import (
 	"news/database"
 	"news/handlers"
 
+	_ "news/docs"
+
 	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
 	"github.com/pkg/errors"
+
+	httpSwagger "github.com/swaggo/http-swagger"
 )
 
 func main() {
@@ -44,6 +62,10 @@ func RunServer() error {
 	router.HandleFunc("/api/News", handlers.CreateNews(db, config.SchemaName, config.TableName)).Methods("POST")
 	router.HandleFunc("/api/News/{id}", handlers.UpdateNews(db, config.SchemaName, config.TableName)).Methods("PUT")
 	router.HandleFunc("/api/News/{id}", handlers.DeleteNews(db, config.SchemaName, config.TableName)).Methods("DELETE")
+
+	router.PathPrefix("/swagger/").Handler(httpSwagger.Handler(
+		httpSwagger.URL("http://localhost:8080/swagger/doc.json"),
+	))
 
 	log.Println("Serwer NewsService został uruchomiony na porcie 8080")
 	return http.ListenAndServe(":8080", router)

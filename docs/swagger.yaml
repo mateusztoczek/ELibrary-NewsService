@@ -1,0 +1,166 @@
+definitions:
+  handlers.NewNews:
+    properties:
+      content:
+        type: string
+    type: object
+  handlers.News:
+    properties:
+      authorId:
+        type: string
+      content:
+        type: string
+      createdDate:
+        type: string
+      id:
+        type: integer
+      lastUpdate:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: This is a sample API documentation for a news service.
+  title: News API Documentation
+  version: "1.0"
+paths:
+  /api/News:
+    get:
+      description: Retrieves a list of all news articles.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/handlers.News'
+            type: array
+      summary: Retrieve all news
+      tags:
+      - News
+    post:
+      consumes:
+      - application/json
+      description: Creates a new news article with the provided data.
+      parameters:
+      - description: NewNews object
+        in: body
+        name: news
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.NewNews'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/handlers.NewNews'
+        "400":
+          description: Invalid request payload
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: Create a new news article
+      tags:
+      - News
+  /api/News/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Deletes a news article based on the provided ID.
+      parameters:
+      - description: News ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: News deleted successfully
+          schema:
+            type: string
+        "400":
+          description: Invalid news ID
+          schema:
+            type: string
+        "404":
+          description: News not found
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: Delete a news article by ID
+      tags:
+      - News
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a news article based on the provided ID.
+      parameters:
+      - description: News ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.News'
+        "400":
+          description: Invalid news ID
+          schema:
+            type: string
+        "404":
+          description: News not found
+          schema:
+            type: string
+      summary: Retrieve a news article by ID
+      tags:
+      - News
+    put:
+      consumes:
+      - application/json
+      description: Updates an existing news article with the provided data.
+      parameters:
+      - description: News ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: News object
+        in: body
+        name: news
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.News'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.News'
+        "400":
+          description: Invalid news ID or request payload
+          schema:
+            type: string
+        "404":
+          description: News not found
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: Update an existing news article
+      tags:
+      - News
+schemes:
+- http
+swagger: "2.0"
