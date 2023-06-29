@@ -7,6 +7,7 @@ import (
 	"news/database"
 	"news/handlers"
 
+	apiHandlers "github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
 	"github.com/pkg/errors"
@@ -37,6 +38,9 @@ func RunServer() error {
 	}
 
 	router := mux.NewRouter()
+	methods := apiHandlers.AllowedMethods([]string{"OPTIONS", "DELETE", "GET", "HEAD", "POST", "PUT"})
+	origins := apiHandlers.AllowedOrigins([]string{"*"})
+	credentials := apiHandlers.AllowCredentials()
 
 	// Endpointy
 	router.HandleFunc("/api/News", handlers.GetAllNews(db, config.SchemaName, config.TableName)).Methods("GET")
@@ -46,5 +50,5 @@ func RunServer() error {
 	router.HandleFunc("/api/News/{id}", handlers.DeleteNews(db, config.SchemaName, config.TableName)).Methods("DELETE")
 
 	log.Println("Serwer NewsService został uruchomiony na porcie 8080")
-	return http.ListenAndServe(":8080", router)
+	return http.ListenAndServe(":8080", apiHandlers.CORS(credentials, methods, origins)(router))
 }
