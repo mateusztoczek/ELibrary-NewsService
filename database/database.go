@@ -20,13 +20,13 @@ func ConnectDB(config config.Config) (*sql.DB, error) {
 
 func CreateNewsTable(db *sql.DB, config config.Config) error {
 	query := fmt.Sprintf(`
-		CREATE SCHEMA IF NOT EXISTS %s;
-		CREATE TABLE IF NOT EXISTS %s.%s (
-			id SERIAL PRIMARY KEY,
-			content TEXT NOT NULL,
-			createdDate TIMESTAMP NOT NULL,
-			lastUpdate TIMESTAMP NOT NULL,
-			authorId TEXT NOT NULL
+		CREATE SCHEMA IF NOT EXISTS "%s";
+		CREATE TABLE IF NOT EXISTS "%s"."%s" (
+			"Id" SERIAL PRIMARY KEY,
+			"Content" TEXT NOT NULL,
+			"CreatedDate" TIMESTAMP NOT NULL,
+			"LastUpdate" TIMESTAMP NOT NULL,
+			"AuthorId" TEXT NOT NULL
 		);`, config.SchemaName, config.SchemaName, config.TableName)
 
 	_, err := db.Exec(query)
