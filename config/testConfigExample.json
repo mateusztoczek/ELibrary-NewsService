@@ -1,0 +1,9 @@
+{
+    "host": "example",
+    "port": 1,
+    "user": "example",
+    "password": "example",
+    "dbname": "example",
+    "schemaName": "test",
+    "tableName": "test"
+  }
